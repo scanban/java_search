@@ -4,35 +4,37 @@ import java.util.*;
 
 public class CashAccountStore {
     private static final int ROW_COUNT = 10000000;
-    private final CashAccountRow[] accountRows = new CashAccountRow[ROW_COUNT];
+    private final long[] accountRows = new long[ROW_COUNT];
 
 
     public CashAccountStore() {
         Random rand = new Random(100);
+        CashAccountRow c = new CashAccountRow();
 
         for(int i = 0; i < ROW_COUNT; ++i) {
-            CashAccountRow c = new CashAccountRow();
+            c.setBitStorage(0L);
             c.setAge(rand.nextInt(100));
             c.setAmount(rand.nextInt(1000) * rand.nextInt(1000));
             c.setCode(rand.nextInt(1000) * rand.nextInt(1000));
             c.setGender(rand.nextInt(2));
             c.setHeight(rand.nextInt(300));
-            accountRows[i] = c;
+            accountRows[i] = c.getBitStorage();
         }
     }
 
     public final int find(final CashAccountFinder finder) {
         int rValue = 0;
+        CashAccountRow c = new CashAccountRow();
 
         finder.compileList();
         for(int i = 0; i < ROW_COUNT; ++i) {
-            if(finder.isMatched(accountRows[i])) { ++rValue; }
+            if(finder.isMatched(c.setBitStorage(accountRows[i]))) { ++rValue; }
         }
 
         return rValue;
     }
 
-   public CashAccountFinder getFinder() { return new CashAccountFinder(); }
+    public CashAccountFinder getFinder() { return new CashAccountFinder(); }
 
 
 

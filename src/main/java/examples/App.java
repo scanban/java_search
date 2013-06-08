@@ -46,5 +46,8 @@ public class App
         long endMillis = System.currentTimeMillis();
         System.out.println("Number of records matched:" + i);
         System.out.println("Elapsed time:" + (endMillis - millis) + "ms");
+        Runtime runtime = Runtime.getRuntime();
+        System.out.println("Used Memory:"
+                + (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024 + "MB");
     }
 }

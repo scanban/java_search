@@ -23,6 +23,12 @@ public final class CashAccountRow {
 
     private long bitStorage;
 
+    long getBitStorage() { return bitStorage; }
+    CashAccountRow setBitStorage(long bitStorage) {
+        this.bitStorage = bitStorage;
+        return this;
+    }
+
     public int getCode() { return (int) (bitStorage & masks.CODE.v); }
     public void setCode(int code) {
         bitStorage = (bitStorage & ~masks.CODE.v) | ((long) code & masks.CODE.v);
