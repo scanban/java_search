@@ -10,11 +10,10 @@ import java.util.Random;
  */
 
 // -XX:+AggressiveOpts -XX:CompileThreshold=1000 -XX:-PrintCompilation -XX:+DoEscapeAnalysis -XX:+UseCompressedOops -XX:+UseFastAccessorMethods -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
-
+// -XX:+AggressiveOpts -XX:CompileThreshold=1000 -XX:-PrintCompilation -XX:+DoEscapeAnalysis -XX:+UseCompressedOops -XX:+UseFastAccessorMethods -XX:+UnlockDiagnosticVMOptions -XX:CompileThreshold=1 -XX:+PrintAssembly -XX:CompileCommand=print,*.testMethod -XX:PrintAssemblyOptions=intel
 public class App 
 {
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) throws Throwable {
         CashAccountStore store = new CashAccountStore();
         Random random = new Random(8);
 
@@ -39,10 +38,10 @@ public class App
 
 
         System.out.println("Warming up...");
-        store.find(finder);
+        store.find2(finder);
         System.out.println("Running benchmark...");
         long millis = System.currentTimeMillis();
-        int i = store.find(finder);
+        int i = store.find2(finder);
         long endMillis = System.currentTimeMillis();
         System.out.println("Number of records matched:" + i);
         System.out.println("Elapsed time:" + (endMillis - millis) + "ms");

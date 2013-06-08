@@ -1,10 +1,20 @@
 package examples.data;
 
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+
 import java.util.*;
+
+abstract class GenMatcherBase {
+    abstract boolean c(CashAccountRow row);
+}
 
 public class CashAccountStore {
     private static final int ROW_COUNT = 10000000;
     private final long[] accountRows = new long[ROW_COUNT];
+    private static Map<String, GenMatcherBase> classMapper = new HashMap<String, GenMatcherBase>();
 
 
     public CashAccountStore() {
@@ -22,6 +32,10 @@ public class CashAccountStore {
         }
     }
 
+    //
+    // Without online code generation
+    //
+
     public final int find(final CashAccountFinder finder) {
         int rValue = 0;
         CashAccountRow c = new CashAccountRow();
@@ -34,9 +48,62 @@ public class CashAccountStore {
         return rValue;
     }
 
+    public final int find2(final CashAccountFinder finder) throws Throwable{
+
+        finder.compileList();
+        StringBuilder cname = new StringBuilder();
+        for(CashAccountFinder.PredicateHolder p: finder.predicateHolderArray) {
+            cname.append(p.field.toString());
+        }
+
+        GenMatcherBase matcherBase;
+        if(classMapper.containsKey(cname.toString())) {
+            matcherBase = classMapper.get(cname.toString());
+        } else {
+            ClassPool classPool = ClassPool.getDefault();
+            classPool.insertClassPath(new ClassClassPath(this.getClass()));
+            CtClass base = classPool.get("examples.data.GenMatcherBase");
+            CtClass gen = classPool.makeClass("examples.data.GenMatcher" + cname, base);
+
+            StringBuilder sb = new StringBuilder("public boolean c(examples.data.CashAccountRow r){ return ");
+            for(CashAccountFinder.PredicateHolder p: finder.predicateHolderArray) {
+                switch (p.field) {
+                    case AGE:
+                        sb.append("r.getAge() >= " + p.minValue + " && r.getAge() <= " + p.maxValue + " && ");
+                        break;
+                    case AMOUNT:
+                        sb.append("r.getAmount() >= " + p.minValue + " && r.getAmount() <= " + p.maxValue + " && ");
+                        break;
+                    case CODE:
+                        sb.append("r.getCode() >= " + p.minValue + " && r.getCode() <= " + p.maxValue + " && ");
+                        break;
+                    case GENDER:
+                        sb.append("r.getGender() >= " + p.minValue + " && r.getGender() <= " + p.maxValue + " && ");
+                        break;
+                    case HEIGHT:
+                        sb.append("r.getHeight() >= " + p.minValue + " && r.getHeight() <= " + p.maxValue + " && ");
+                        break;
+                }
+            }
+            sb.append("true; }");
+            System.out.println("Generated code:");
+            System.out.println(sb);
+            gen.addMethod(CtMethod.make(sb.toString(), gen));
+            matcherBase = (GenMatcherBase) gen.toClass().newInstance();
+            classMapper.put(cname.toString(), matcherBase);
+        }
+
+        CashAccountRow c = new CashAccountRow();
+        int rValue = 0;
+
+        for(int i = 0; i < ROW_COUNT; ++i) {
+            if(matcherBase.c(c.setBitStorage(accountRows[i]))) { ++rValue; }
+        }
+
+    return rValue;
+    }
+
     public CashAccountFinder getFinder() { return new CashAccountFinder(); }
-
-
 
     public static class CashAccountFinder {
         enum RecordFields { AGE, AMOUNT, CODE, GENDER, HEIGHT }
@@ -78,7 +145,6 @@ public class CashAccountStore {
             }
 */
         }
-
 
         public final boolean isMatched(final CashAccountRow row) {
             for(PredicateHolder p: predicateHolderArray) {
@@ -147,10 +213,12 @@ public class CashAccountStore {
             private int maxValue;
             private FieldGetter fieldGetter;
             private int selectivety;
+            private RecordFields field;
 
             private PredicateHolder(RecordFields field, int minValue, int maxValue) {
                 this.minValue = minValue;
                 this.maxValue = maxValue;
+                this.field = field;
                 this.selectivety = getSelectivety(field, minValue, maxValue);
                 //System.out.println(field.toString() + " " + selectivety );
 

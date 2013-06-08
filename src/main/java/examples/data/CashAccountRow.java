@@ -54,5 +54,4 @@ public final class CashAccountRow {
         bitStorage = (bitStorage & ~masks.HEIGHT.v) | ((long) height << shifts.HEIGHT.v & masks.HEIGHT.v);
     }
 
-
 }
